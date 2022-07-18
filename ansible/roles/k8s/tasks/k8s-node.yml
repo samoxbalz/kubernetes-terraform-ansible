@@ -26,7 +26,7 @@
 
 - name: Template kubeadm join config
   template:
-    src: "kubeadm-join.yaml.j2"
+    src: "kubeadm-join.yml.j2"
     dest: "/etc/kubernetes/kubeadm/join-kubeadm.yml"
 
 - name: Join workers to cluster

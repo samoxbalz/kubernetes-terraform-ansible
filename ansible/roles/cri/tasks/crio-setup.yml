@@ -1,0 +1,75 @@
+- name: Add an apt signing keys for CRI-O
+  environment:
+    OS: "{{ crio_os }}"
+    VERSION: "{{ crio_version }}"
+  apt_key:
+    url: "{{ item }}"
+    state: present
+  with_items:
+    - "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/Release.key"
+    - "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$VERSION/$OS/Release.key"
+
+- name: Adding Backports repository for CRI-O
+  environment:
+    OS: "{{ crio_os }}"
+    VERSION: "{{ crio_version }}"
+  apt_repository:
+    repo: "deb http://deb.debian.org/debian buster-backports main"
+    state: present
+    filename: backports
+
+- name: Adding Kubic repository for CRI-O
+  environment:
+    OS: "{{ crio_os }}"
+    VERSION: "{{ crio_version }}"
+  apt_repository:
+    repo: "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /"
+    state: present
+    filename: devel:kubic:libcontainers:stable
+
+- name: Adding CRI repository for CRI-O
+  environment:
+    OS: "{{ crio_os }}"
+    VERSION: "{{ crio_version }}"
+  apt_repository:
+    repo: "deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$VERSION/$OS/ /"
+    state: present
+    filename: "devel:kubic:libcontainers:stable:cri-o:{{ crio_version }}"
+
+- name: Create CRI-O directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0755
+  with_items:
+    - "{{ crio_root_dir_path }}"
+    - /etc/crio
+    - /etc/containers
+    - /etc/systemd/system/crio.service.d
+    - "{{ crio_root_dir_path }}/logs/pods"
+    - "{{ crio_root_dir_path }}/containers/storage"
+
+- name: Template CRI-O config
+  template:
+    src: crio.conf.j2
+    dest: /etc/crio/crio.conf
+    mode: 0644
+  register: config_install
+
+- name: Install CRI-O packages
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - libseccomp2
+    - cri-o
+    - cri-o-runc
+    - cri-tools
+
+- name: Enable and start CRI-O
+  service:
+    name: crio
+    daemon_reload: yes
+    enabled: yes
+    state: restarted

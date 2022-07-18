@@ -1,0 +1,9 @@
+- import_tasks: "cri-common.yml"
+
+- import_tasks: "containerd-setup.yml"
+  when:
+    - container_runtime == "containerd"
+
+- import_tasks: "crio-setup.yml"
+  when:
+    - container_runtime == "crio"

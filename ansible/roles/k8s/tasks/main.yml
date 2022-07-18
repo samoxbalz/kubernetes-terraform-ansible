@@ -1,0 +1,3 @@
+- import_tasks: "k8s-common.yml"
+- import_tasks: "k8s-master.yml"
+- import_tasks: "k8s-node.yml"

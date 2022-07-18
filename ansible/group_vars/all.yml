@@ -13,10 +13,11 @@ haproxy_config_dir: "/etc/haproxy"
 loadbalancer_apiserver_port: 8443
 kube_apiserver_port: 6443
 kube_config: /etc/kubernetes/admin.conf
+container_runtime: "crio"
+cri_sandbox_image: "k8s.gcr.io/pause:3.5"
 
 containerd_storage_dir: "/app/containerd"
 containerd_state_dir: "/run/containerd"
-containerd_sandbox_image: "k8s.gcr.io/pause:3.5"
 containerd_runc_runtime:
   name: runc
   type: "io.containerd.runc.v2"
@@ -26,6 +27,10 @@ containerd_runc_runtime:
   systemdCgroup: "true"
 containerd_registries:
   "docker.io": "https://registry-1.docker.io"
+
+crio_os: "xUbuntu_20.04"
+crio_version: "1.23"
+crio_root_dir_path: "/app/crio"
 
 helm_path: /app/helm
 helm_version: v3.9.1

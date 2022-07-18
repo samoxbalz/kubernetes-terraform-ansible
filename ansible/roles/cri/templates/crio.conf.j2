@@ -1,0 +1,50 @@
+[crio]
+
+storage_driver = "overlay"
+root = "{{ crio_root_dir_path }}/containers/storage"
+log_dir = "{{ crio_root_dir_path }}/logs/pods"
+
+[crio.api]
+
+listen = "/var/run/crio/crio.sock"
+stream_address = "127.0.0.1"
+stream_port = "0"
+
+
+[crio.runtime]
+
+conmon = ""
+conmon_cgroup = "kubepods.slice"
+log_size_max = -1
+log_to_journald = false
+read_only = false
+log_level = "info"
+default_runtime = "runc"
+
+[crio.runtime.runtimes.runc]
+runtime_path = ""
+runtime_type = "oci"
+runtime_root = "/run/runc"
+
+[crio.image]
+
+default_transport = "docker://"
+global_auth_file = "/etc/crio/config.json"
+pause_image = "{{ cri_sandbox_image }}"
+pause_command = "/pause"
+
+[crio.network]
+
+# Path to the directory where CNI configuration files are located.
+network_dir = "/etc/cni/net.d/"
+
+# Paths to directories where CNI plugin binaries are located.
+plugin_dirs = [
+	"/opt/cni/bin/",
+]
+
+[crio.metrics]
+
+enable_metrics = true
+metrics_port = 9537
+metrics_socket = ""
