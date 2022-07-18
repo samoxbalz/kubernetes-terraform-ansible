@@ -1,0 +1,19 @@
+- hosts: all
+  become: yes
+  roles:
+    - pre-install
+    - loadbalancer
+    - cri
+    - k8s-common
+
+- hosts: k8s_master
+  become: yes
+  roles:
+    - k8s-cluster
+    - helm
+    - k8s-network
+
+- hosts: k8s_worker
+  become: yes
+  roles:
+    - k8s-cluster
