@@ -1,5 +1,5 @@
 - import_tasks: "k8s-master.yml"
-  when: inventory_hostname in groups[kubeadm_master_group]
+  when: node_role == "master"
 
 - import_tasks: "k8s-node.yml"
-  when: inventory_hostname not in groups[kubeadm_master_group]
+  when: node_role == "worker"

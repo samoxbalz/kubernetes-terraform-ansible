@@ -1,7 +1,7 @@
 ansible_ssh_extra_args: '-o StrictHostKeyChecking=no'
 kubernetes_version: "1.23.0"
 kubectl_auto_completion_dir: "/etc/bash_completion.d"
-kubeadm_masters_init_cri_socket: "/run/containerd/containerd.sock"
+kubeadm_masters_init_cri_socket: "/var/run/crio/crio.sock"
 kubeadm_masters_init_pod_network_cidr: "10.124.0.0/16"
 kubeadm_masters_init_service_cidr: "10.96.0.0/16"
 kubeadm_masters_init_cluster_name: "k8s-envoy"

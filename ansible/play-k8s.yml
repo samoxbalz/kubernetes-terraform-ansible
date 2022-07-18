@@ -8,12 +8,16 @@
 
 - hosts: k8s_master
   become: yes
+  vars:
+    node_role: "master"
   roles:
-    - k8s-cluster
     - helm
+    - k8s-cluster
     - k8s-network
 
 - hosts: k8s_worker
   become: yes
+  vars:
+    node_role: "worker"
   roles:
     - k8s-cluster
