@@ -1,0 +1,26 @@
+- name: Install HAProxy
+  apt:
+    name: "haproxy"
+    state: present
+    update_cache: yes
+
+- name: Make HAProxy directory
+  file:
+    path: "{{ haproxy_config_dir }}"
+    state: directory
+    mode: 0755
+    owner: root
+
+- name: Write HAProxy configuration
+  template:
+    src: "haproxy-loadbalancer.cfg.j2"
+    dest: "{{ haproxy_config_dir }}/haproxy.cfg"
+    mode: 0755
+    backup: yes
+
+- name: Enable and start HAProxy
+  systemd:
+    name: haproxy
+    enabled: yes
+    state: restarted
+    daemon_reload: yes

@@ -1,0 +1,36 @@
+---
+- name: Create kubeadm directories
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - /etc/kubernetes/kubeadm
+    - /etc/kubernetes/kubeadm/patches
+
+- name: Generate join token on masters
+  run_once: true
+  command:
+    cmd: >-
+      kubeadm token create --config /etc/kubernetes/kubeadm/init-kubeadm.yaml
+  register: kubeadm_worker_join_command
+  changed_when: false
+  delegate_to: "{{ groups[kubeadm_master_group] | first | string }}"
+
+- name: Get sha256 hash CA certificate
+  run_once: true
+  changed_when: false
+  ansible.builtin.raw: >-
+    openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
+  register: kubeadm_worker_ca_hash
+  delegate_to: "{{ groups[kubeadm_master_group] | first | string }}"
+
+- name: Template kubeadm join config
+  template:
+    src: "kubeadm-join.yaml.j2"
+    dest: "/etc/kubernetes/kubeadm/join-kubeadm.yml"
+
+- name: Join workers to cluster
+  command:
+    cmd: >-
+      kubeadm join --config /etc/kubernetes/kubeadm/join-kubeadm.yml
+    creates: /etc/kubernetes/pki/ca.crt

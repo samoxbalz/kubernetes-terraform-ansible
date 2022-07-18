@@ -1,0 +1,39 @@
+version = 2
+root = "{{ containerd_storage_dir }}"
+state = "{{ containerd_state_dir }}"
+oom_score = 0
+
+[grpc]
+  address = "{{ containerd_state_dir }}/containerd.sock"
+  max_recv_message_size = 16777216
+  max_send_message_size = 16777216
+
+[debug]
+  level = "info"
+
+[metrics]
+  address = ""
+  grpc_histogram = false
+
+[plugins]
+  [plugins."io.containerd.grpc.v1.cri"]
+    sandbox_image = "{{ containerd_sandbox_image }}"
+    max_container_log_line_size = 16384
+    [plugins."io.containerd.grpc.v1.cri".containerd]
+      default_runtime_name = "runc"
+      snapshotter = "overlayfs"
+      [plugins."io.containerd.grpc.v1.cri".containerd.runtimes]
+        [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.{{ containerd_runc_runtime.name }}]
+          runtime_type = "{{ containerd_runc_runtime.type }}"
+          runtime_engine = "{{ containerd_runc_runtime.engine}}"
+          runtime_root = "{{ containerd_runc_runtime.root }}"
+          [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.{{ containerd_runc_runtime.name }}.options]
+{% for key, value in containerd_runc_runtime.options.items() %}
+            {{ key }} = {{ value }}
+{% endfor %}
+      [plugins."io.containerd.grpc.v1.cri".registry]
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+{% for registry, addr in containerd_registries.items() %}
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors."{{ registry }}"]
+          endpoint = ["{{ ([ addr ] | flatten ) | join('","') }}"]
+{% endfor %}

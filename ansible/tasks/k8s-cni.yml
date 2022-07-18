@@ -1,0 +1,45 @@
+---
+- name: Register if Cilium Helm repository is installed
+  environment:
+    KUBECONFIG: "{{ kube_config }}"
+  command: helm search repo {{ cilium_repo_name }} -n {{ cilium_namespace }} --version ^{{ cilium_chart_version }} 2>/dev/null
+  register: cilium_repo_installed
+  changed_when: false
+  run_once: true
+  ignore_errors: true
+
+- name: Add Cilium helm repository
+  environment:
+    KUBECONFIG: "{{ kube_config }}"
+  command: helm repo add {{ cilium_repo_name }} {{ cilium_chart_url }}
+  changed_when: false
+  run_once: true
+  when: |
+    cilium_repo_installed.failed or
+    cilium_repo_installed.stdout.find(cilium_repo_name) == -1
+
+- name: Create cilium namespace
+  k8s:
+    kubeconfig: "{{ kube_config }}"
+    name: "{{ cilium_namespace }}"
+    api_version: v1
+    kind: Namespace
+    state: present
+  run_once: true
+
+- name: Template cilium values
+  template:
+    src: "cilium-values.yml.j2"
+    dest: "/tmp/cilium_values.yaml"
+    mode: 0755
+
+- name: Helm install cilium
+  environment:
+    KUBECONFIG: "{{ kube_config }}"
+  run_once: true
+  command: helm install {{ cilium_release_name }} {{ cilium_chart_name }} --namespace {{ cilium_namespace }} --version {{ cilium_chart_version }} --values /tmp/cilium_values.yaml
+
+- name: Delete temporary file for Helm values
+  file:
+    path: "/tmp/cilium_values.yaml"
+    state: absent

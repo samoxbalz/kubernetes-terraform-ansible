@@ -1,0 +1,67 @@
+---
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: InitConfiguration
+bootstrapTokens:
+- groups:
+  - system:bootstrappers:kubeadm:default-node-token
+  ttl: "1h"
+  usages:
+  - signing
+  - authentication
+localAPIEndpoint:
+  advertiseAddress: {{ ansible_default_ipv4.address }}
+  bindPort: 6443
+nodeRegistration:
+  criSocket: {{ kubeadm_masters_init_cri_socket }}
+  name: {{ inventory_hostname }}
+  taints:
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/master
+  ignorePreflightErrors:
+    - ImagePull
+patches:
+  directory: /etc/kubernetes/kubeadm/patches
+skipPhases:
+  - addon/kube-proxy
+---
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: ClusterConfiguration
+kubernetesVersion: {{ kubernetes_version }}
+apiServer:
+  timeoutForControlPlane: 4m0s
+  extraArgs:
+    event-ttl: 1h0m0s
+  enable-bootstrap-token-auth: true
+certificatesDir: /etc/kubernetes/pki
+clusterName: {{ kubeadm_masters_init_cluster_name }}
+dns: {}
+etcd:
+  local:
+    dataDir: {{ kubeadm_masters_init_etc_data_dir }}
+imageRepository: k8s.gcr.io
+controlPlaneEndpoint: {{ kubeadm_masters_init_cluster_api_hostname }}:{{ loadbalancer_apiserver_port }}
+networking:
+  dnsDomain: cluster.local
+  serviceSubnet: {{ kubeadm_masters_init_service_cidr }}
+  podSubnet: {{ kubeadm_masters_init_pod_network_cidr }}
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+rotateCertificates: true
+serverTLSBootstrap: true
+enableServer: true
+readOnlyPort: 0
+staticPodPath: /etc/kubernetes/manifests
+authentication:
+  anonymous:
+    enabled: false
+  webhook:
+    cacheTTL: 2m0s
+    enabled: true
+  x509:
+    clientCAFile: /etc/kubernetes/pki/ca.crt
+authorization:
+  mode: Webhook
+  webhook:
+    cacheAuthorizedTTL: 5m0s
+    cacheUnauthorizedTTL: 30s

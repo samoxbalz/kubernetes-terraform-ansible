@@ -1,0 +1,106 @@
+- name: Install kubectl and completion
+  apt:
+    name: "{{ item }}"
+    state: present
+    force: yes
+    update_cache: yes
+  with_items: 
+    - "kubectl={{ kubernetes_version }}-00"
+    - "bash-completion"
+
+- name: Create completion directory
+  file:
+    path: "{{ kubectl_auto_completion_dir }}"
+    mode: 0755
+    state: directory
+
+- name: Create completion config file
+  file:
+    path: "{{ kubectl_auto_completion_dir }}/kubectl"
+    mode: 0755
+    state: touch
+
+- name: Get kubectl auto-completion
+  command: kubectl completion bash
+  register: kubectl_completion_source
+  changed_when: false
+
+- name: Set kubectl auto-completion file
+  copy:
+    content: "{{ kubectl_completion_source.stdout }}"
+    dest: "{{ kubectl_auto_completion_dir }}/kubectl"
+    mode: 0755
+  when:
+    - kubectl_completion_source is defined
+
+- name: Create kubeadm directories
+  file:
+    path: "{{ item }}"
+    mode: 0755
+    state: directory
+  with_items:
+    - /etc/kubernetes/kubeadm
+    - /etc/kubernetes/kubeadm/patches
+
+- name: Template kubeadm init config
+  template:
+    src: "kubeadm-init.yml.j2"
+    dest: "/etc/kubernetes/kubeadm/init-kubeadm.yaml"
+    mode: 0644
+
+- name: Init first master
+  run_once: true
+  command:
+    cmd: >-
+      kubeadm init --config /etc/kubernetes/kubeadm/init-kubeadm.yaml
+    creates: /etc/kubernetes/admin.conf
+
+- name: Generating bootstrap token
+  run_once: true
+  command:
+    cmd: >-
+      kubeadm token create --config /etc/kubernetes/kubeadm/init-kubeadm.yaml
+  register: kubeadm_masters_init_join_command
+  changed_when: false
+
+- name: Upload certificate to kubead-serts store
+  command:
+    cmd: >-
+      kubeadm init phase upload-certs --upload-certs --config /etc/kubernetes/kubeadm/init-kubeadm.yaml
+  changed_when: false
+  register: kubeadm_masters_init_certificates_key
+  run_once: true
+
+- name: Get sha256 hash CA certificate
+  run_once: true
+  changed_when: false
+  shell: >-
+    openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
+  register: kubeadm_masters_init_ca_hash
+
+- name: Template join kubeadm config
+  template:
+    src: "kubeadm-join.yml.j2"
+    dest: /etc/kubernetes/kubeadm/join-kubeadm.yaml
+    mode: 0644
+
+- name: Join other masters to cluster
+  command:
+    cmd: >-
+      kubeadm join --config /etc/kubernetes/kubeadm/join-kubeadm.yaml
+    creates: /etc/kubernetes/admin.conf
+
+- name: Create Kubernetes config directory
+  become: yes
+  become_user: "{{ kubeadm_user }}"
+  file:
+    path: "~/.kube"
+    state: directory
+    mode: 0755
+
+- name: Copy admin.conf to user Kubernetes config
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "/home/{{ kubeadm_user }}/.kube/config"
+    remote_src: yes
+    owner: "{{ kubeadm_user }}"

@@ -1,0 +1,112 @@
+# https://github.com/cilium/cilium/blob/v1.11.2/install/kubernetes/cilium/values.yaml
+
+k8sServiceHost: {{ kubeadm_masters_init_cluster_api_hostname }}
+k8sServicePort: {{ loadbalancer_apiserver_port }}
+
+serviceAccounts:
+  cilium:
+    create: true
+    name: cilium
+    annotations: {}
+  operator:
+    create: true
+    name: cilium-operator
+    annotations: {}
+{% if cilium_hubble_enable | bool %}
+  relay:
+    create: true
+    name: hubble-relay
+    annotations: {}
+  ui:
+    create: true
+    name: hubble-ui
+    annotations: {}
+{% endif %}
+
+agent: true
+
+rollOutCiliumPods: true
+
+kubeProxyReplacement: "strict"
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+image:
+  repository: {{ cilium_image_repo }}
+  tag: {{ cilium_image_tag }}
+  useDigest: false
+
+# -- Pod affinity for cilium-agent.
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/os
+              operator: In
+              values:
+                - linux
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+    - labelSelector:
+        matchExpressions:
+        - key: k8s-app
+          operator: In
+          values:
+          - cilium
+      topologyKey: kubernetes.io/hostname
+
+updateStrategy:
+  rollingUpdate:
+    maxUnavailable: 2
+
+bpf:
+  masquerade: true
+
+containerRuntime:
+  integration: "auto"
+
+hubble:
+  enabled: {{ cilium_hubble_enable | lower }}
+
+ipam:
+  # -- Configure IP Address Management mode.
+  # ref: https://docs.cilium.io/en/stable/concepts/networking/ipam/
+  mode: "cluster-pool"
+  operator:
+    clusterPoolIPv4PodCIDR: "{{ cilium_pod_subnet_cidr }}"
+    # -- IPv4 CIDR list range to delegate to individual nodes for IPAM.
+    clusterPoolIPv4PodCIDRList: []
+    # -- IPv4 CIDR mask size to delegate to individual nodes for IPAM.
+    clusterPoolIPv4MaskSize: 24
+    # -- Deprecated in favor of ipam.operator.clusterPoolIPv6PodCIDRList.
+    # IPv6 CIDR range to delegate to individual nodes for IPAM.
+    clusterPoolIPv6PodCIDR: "fd00::/104"
+     # -- IPv6 CIDR list range to delegate to individual nodes for IPAM.
+    clusterPoolIPv6PodCIDRList: []
+    # -- IPv6 CIDR mask size to delegate to individual nodes for IPAM.
+    clusterPoolIPv6MaskSize: 120
+
+egressGateway:
+  enabled: true
+
+prometheus:
+  enabled: {{ cilium_monitoring_features | lower }}
+
+tunnel: "geneve"
+
+operator:
+  enabled: true
+  rollOutPods: true
+  image:
+    repository: {{ cilium_operator_generic_image_repo | replace('-generic','' ) }}
+    tag: {{ cilium_operator_generic_image_tag }}
+    useDigest: false
+  prometheus:
+    enabled: {{ cilium_monitoring_features | lower }}
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi

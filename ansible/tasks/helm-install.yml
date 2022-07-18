@@ -1,0 +1,26 @@
+---
+- name: Create helm directory
+  file:
+    path: "{{ helm_path }}/helm-{{ helm_version }}/plugins"
+    mode: 0755
+    state: directory
+
+- name: Fetch helm tarball
+  get_url:
+    url: "{{ helm_url }}/helm-{{ helm_version }}-linux-amd64.tar.gz"
+    dest: "{{ helm_path }}/helm-{{ helm_version }}-linux-amd64.tar.gz"
+    mode: 0644
+
+- name: Unpack helm tarball
+  unarchive:
+    src: "{{ helm_path }}/helm-{{ helm_version }}-linux-amd64.tar.gz"
+    dest: "{{ helm_path }}/helm-{{ helm_version }}"
+    mode: 0755
+    remote_src: true
+
+- name: Copy helm binary
+  file:
+    src: "{{ helm_path }}/helm-{{ helm_version }}/linux-amd64/helm"
+    dest: "/usr/local/bin/helm"
+    mode: 0755
+    state: link
