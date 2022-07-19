@@ -1,13 +1,10 @@
 - name: Add an apt signing keys for CRI-O
-  environment:
-    OS: "{{ crio_os }}"
-    VERSION: "{{ crio_version }}"
   apt_key:
     url: "{{ item }}"
     state: present
   with_items:
-    - "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/Release.key"
-    - "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$VERSION/$OS/Release.key"
+    - "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ crio_os }}/Release.key"
+    - "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ crio_version }}/{{ crio_os }}/Release.key"
 
 - name: Adding Backports repository for CRI-O
   environment:
@@ -19,20 +16,14 @@
     filename: backports
 
 - name: Adding Kubic repository for CRI-O
-  environment:
-    OS: "{{ crio_os }}"
-    VERSION: "{{ crio_version }}"
   apt_repository:
-    repo: "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /"
+    repo: "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ crio_os }}/ /"
     state: present
     filename: devel:kubic:libcontainers:stable
 
 - name: Adding CRI repository for CRI-O
-  environment:
-    OS: "{{ crio_os }}"
-    VERSION: "{{ crio_version }}"
   apt_repository:
-    repo: "deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$VERSION/$OS/ /"
+    repo: "deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ crio_version }}/{{ crio_os }}/ /"
     state: present
     filename: "devel:kubic:libcontainers:stable:cri-o:{{ crio_version }}"
 
