@@ -1,6 +1,6 @@
 # https://github.com/cilium/cilium/blob/v1.11.2/install/kubernetes/cilium/values.yaml
 
-k8sServiceHost: {{ kubeadm_masters_init_cluster_api_hostname }}
+k8sServiceHost: {{ kubeadm_cluster_api_hostname }}
 k8sServicePort: {{ loadbalancer_apiserver_port }}
 
 serviceAccounts:

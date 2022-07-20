@@ -26,11 +26,32 @@
 
 - name: Template kubeadm join config
   template:
-    src: "kubeadm-join.yml.j2"
-    dest: "/etc/kubernetes/kubeadm/join-kubeadm.yml"
+    src: "kubeadm-join-worker.yml.j2"
+    dest: "/etc/kubernetes/kubeadm/join-kubeadm-worker.yml"
 
 - name: Join workers to cluster
   command:
     cmd: >-
-      kubeadm join --config /etc/kubernetes/kubeadm/join-kubeadm.yml
+      kubeadm join --config /etc/kubernetes/kubeadm/join-kubeadm-worker.yml
     creates: /etc/kubernetes/pki/ca.crt
+
+- name: Waiting for csr generation
+  pause:
+    seconds: 50
+
+- name: Get certificate signing requests
+  environment:
+    KUBECONFIG: "{{ kube_config }}"
+  command: "kubectl get csr -o name"
+  register: get_csr
+  changed_when: false
+  delegate_to: "{{ groups[kubeadm_master_group] | first | string }}"
+
+- name: Approve certificates
+  environment:
+    KUBECONFIG: "{{ kube_config }}"
+  command: "kubectl certificate approve {{ get_csr.stdout_lines | join(' ') }}"
+  register: certificate_approve
+  when: get_csr.stdout_lines | length > 0
+  changed_when: certificate_approve.stdout
+  delegate_to: "{{ groups[kubeadm_master_group] | first | string }}"

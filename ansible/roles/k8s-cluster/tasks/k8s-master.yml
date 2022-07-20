@@ -90,6 +90,25 @@
       kubeadm join --config /etc/kubernetes/kubeadm/join-kubeadm.yaml
     creates: /etc/kubernetes/admin.conf
 
+- name: Waiting for csr generation
+  pause:
+    seconds: 25
+
+- name: Get certificate signing requests
+  environment:
+    KUBECONFIG: "{{ kube_config }}"
+  command: "kubectl get csr -o name"
+  register: get_csr
+  changed_when: false
+
+- name: Approve certificates
+  environment:
+    KUBECONFIG: "{{ kube_config }}"
+  command: "kubectl certificate approve {{ get_csr.stdout_lines | join(' ') }}"
+  register: certificate_approve
+  when: get_csr.stdout_lines | length > 0
+  changed_when: certificate_approve.stdout
+
 - name: Create Kubernetes config directory
   become: yes
   become_user: "{{ kubeadm_user }}"

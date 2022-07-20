@@ -1,14 +1,16 @@
 ansible_ssh_extra_args: '-o StrictHostKeyChecking=no'
 kubernetes_version: "1.23.0"
 kubectl_auto_completion_dir: "/etc/bash_completion.d"
-kubeadm_masters_init_cri_socket: "/var/run/crio/crio.sock"
+
 kubeadm_masters_init_pod_network_cidr: "10.124.0.0/16"
 kubeadm_masters_init_service_cidr: "10.96.0.0/16"
-kubeadm_masters_init_cluster_name: "k8s-envoy"
 kubeadm_masters_init_etc_data_dir: "/app/etcd"
-kubeadm_masters_init_cluster_api_hostname: "127.0.0.1"
+kubeadm_masters_init_cluster_name: "k8s-envoy"
+kubeadm_cri_socket: "/var/run/crio/crio.sock"
+kubeadm_cluster_api_hostname: "127.0.0.1"
 kubeadm_master_group: "k8s_master"
 kubeadm_user: "ubuntu"
+
 haproxy_config_dir: "/etc/haproxy"
 loadbalancer_apiserver_port: 8443
 kube_apiserver_port: 6443
@@ -40,7 +42,7 @@ helm_diff_filename: helm-diff-linux-amd64.tgz
 
 cilium_repo_name: "cilium"
 cilium_release_name: "cilium"
-cilium_chart_name: "cilium"
+cilium_chart_name: "cilium/cilium"
 cilium_chart_url: "https://helm.cilium.io/"
 cilium_chart_version: "1.11.6"
 cilium_image_repo: quay.io/cilium/cilium
@@ -52,7 +54,6 @@ cilium_namespace: cluster-cilium
 
 cilium_helm_bin_path: "/usr/local/bin/helm"
 cilium_helm_repo: "https://helm.cilium.io"
-cilium_helm_chart_version: 1.11.6
 
 cilium_pod_subnet_cidr: "10.112.0.0/16"
 

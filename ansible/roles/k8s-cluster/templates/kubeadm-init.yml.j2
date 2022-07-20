@@ -12,7 +12,7 @@ localAPIEndpoint:
   advertiseAddress: {{ ansible_default_ipv4.address }}
   bindPort: 6443
 nodeRegistration:
-  criSocket: {{ kubeadm_masters_init_cri_socket }}
+  criSocket: {{ kubeadm_cri_socket }}
   name: {{ inventory_hostname }}
   taints:
   - effect: NoSchedule
@@ -39,7 +39,7 @@ etcd:
   local:
     dataDir: {{ kubeadm_masters_init_etc_data_dir }}
 imageRepository: k8s.gcr.io
-controlPlaneEndpoint: {{ kubeadm_masters_init_cluster_api_hostname }}:{{ loadbalancer_apiserver_port }}
+controlPlaneEndpoint: {{ kubeadm_cluster_api_hostname }}:{{ loadbalancer_apiserver_port }}
 networking:
   dnsDomain: cluster.local
   serviceSubnet: {{ kubeadm_masters_init_service_cidr }}

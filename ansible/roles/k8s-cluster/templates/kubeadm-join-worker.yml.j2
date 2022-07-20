@@ -1,25 +1,18 @@
 ---
 apiVersion: kubeadm.k8s.io/v1beta3
+caCertPath: /etc/kubernetes/pki/ca.crt
 kind: JoinConfiguration
 discovery:
   bootstrapToken:
     apiServerEndpoint: {{ kubeadm_cluster_api_hostname }}:{{ loadbalancer_apiserver_port }}
-    token: {{ kubeadm_masters_init_join_command.stdout }}
+    token: {{ kubeadm_worker_join_command.stdout }}
     caCertHashes:
-      - sha256:{{ kubeadm_masters_init_ca_hash.stdout | trim }}
+      - sha256:{{ kubeadm_worker_ca_hash.stdout | trim }}
   timeout: 5m0s
-controlPlane:
-  localAPIEndpoint:
-    advertiseAddress: {{ ansible_default_ipv4.address }}
-    bindPort: 6443
-  certificateKey: {{ kubeadm_masters_init_certificates_key.stdout_lines | last | string }}
-caCertPath: /etc/kubernetes/pki/ca.crt
 nodeRegistration:
   criSocket: {{ kubeadm_cri_socket }}
   name: {{ inventory_hostname }}
-  taints:
-  - effect: NoSchedule
-    key: node-role.kubernetes.io/master
+  taints: []
   imagePullPolicy: IfNotPresent
   ignorePreflightErrors:
     - ImagePull
@@ -31,22 +24,20 @@ kind: ClusterConfiguration
 kubernetesVersion: {{ kubernetes_version }}
 apiServer:
   timeoutForControlPlane: 4m0s
+  insecure-port: 0
   extraArgs:
-    insecure-port: 0
     event-ttl: 1h0m0s
-  enable-bootstrap-token-auth: true
 certificatesDir: /etc/kubernetes/pki
 clusterName: {{ kubeadm_masters_init_cluster_name }}
+controllerManager: {}
 dns: {}
-etcd:
-  local:
-    dataDir: {{ kubeadm_masters_init_etc_data_dir }}
 imageRepository: k8s.gcr.io
-controlPlaneEndpoint: {{ kubeadm_cluster_api_hostname }}:{{ loadbalancer_apiserver_port }}
+controlPlaneEndpoint: {{ kubeadm_cluster_api_hostname }}
 networking:
   dnsDomain: cluster.local
   serviceSubnet: {{ kubeadm_masters_init_service_cidr }}
   podSubnet: {{ kubeadm_masters_init_pod_network_cidr }}
+scheduler: {}
 ---
 apiVersion: kubelet.config.k8s.io/v1beta1
 kind: KubeletConfiguration
