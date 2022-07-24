@@ -9,11 +9,11 @@ bootstrapTokens:
   - signing
   - authentication
 localAPIEndpoint:
-  advertiseAddress: {{ ansible_default_ipv4.address }}
+  advertiseAddress: {{ internal_ip }}
   bindPort: 6443
 nodeRegistration:
   criSocket: {{ kubeadm_cri_socket }}
-  name: {{ inventory_hostname }}
+  name: {{ node_name }}
   taints:
   - effect: NoSchedule
     key: node-role.kubernetes.io/master

@@ -23,6 +23,9 @@ serviceAccounts:
     annotations: {}
 {% endif %}
 
+debug:
+  enabled: {{ cilium_debug_enable | lower }}
+
 agent: true
 
 rollOutCiliumPods: true

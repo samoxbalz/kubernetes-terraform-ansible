@@ -57,6 +57,7 @@ cilium_helm_repo: "https://helm.cilium.io"
 
 cilium_pod_subnet_cidr: "10.112.0.0/16"
 
+cilium_debug_enable: true
 cilium_hubble_enable: false
 cilium_monitoring_features: false
 cilium_kubeproxy_replace: true

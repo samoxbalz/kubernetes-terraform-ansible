@@ -27,19 +27,31 @@
     state: present
   run_once: true
 
-- name: Template cilium values
+- name: Template cilium values and node patcher
   template:
-    src: "cilium-values.yml.j2"
-    dest: "/tmp/cilium_values.yaml"
+    src: "cilium-{{ item }}.yml.j2"
+    dest: "/tmp/cilium-{{ item }}.yaml"
     mode: 0755
+  with_items:
+    - values
+    - node-patcher
 
 - name: Helm install cilium
   environment:
     KUBECONFIG: "{{ kube_config }}"
   run_once: true
-  command: helm install {{ cilium_release_name }} {{ cilium_chart_name }} --namespace {{ cilium_namespace }} --version {{ cilium_chart_version }} --values /tmp/cilium_values.yaml
+  command: helm install {{ cilium_release_name }} {{ cilium_chart_name }} --namespace {{ cilium_namespace }} --version {{ cilium_chart_version }} --values /tmp/cilium-values.yaml
+
+- name: Patch nodes
+  environment:
+    KUBECONFIG: "{{ kube_config }}"
+  command: kubectl apply -f /tmp/cilium-node-patcher.yaml
+  run_once: true
 
 - name: Delete temporary file for Helm values
   file:
-    path: "/tmp/cilium_values.yaml"
+    path: "/tmp/{{ item }}.yaml"
     state: absent
+  with_items:
+    - values
+    - node-patcher

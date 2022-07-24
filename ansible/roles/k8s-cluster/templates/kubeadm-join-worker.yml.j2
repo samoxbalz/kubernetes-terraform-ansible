@@ -11,7 +11,7 @@ discovery:
   timeout: 5m0s
 nodeRegistration:
   criSocket: {{ kubeadm_cri_socket }}
-  name: {{ inventory_hostname }}
+  name: {{ node_name }}
   taints: []
   imagePullPolicy: IfNotPresent
   ignorePreflightErrors:

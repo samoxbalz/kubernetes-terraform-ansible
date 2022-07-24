@@ -32,5 +32,5 @@ backend kube_api_backend
   option httpchk GET /healthz
   http-check expect status 200
   {% for host in groups[kubeadm_master_group] -%}
-  server {{ hostvars[host]['inventory_hostname'] }} {{ hostvars[host]['ansible_default_ipv4']['address'] }}:{{ kube_apiserver_port }} check check-ssl verify none
+  server {{ hostvars[host]['node_name'] }} {{ hostvars[host]['internal_ip'] }}:{{ kube_apiserver_port }} check check-ssl verify none
   {% endfor -%}

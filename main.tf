@@ -131,36 +131,23 @@ resource "yandex_compute_instance" "kube-node-2" {
   }
 }
 
-resource "yandex_compute_instance" "kube-infra" {
-  name = "kube-infra"
-  hostname = "kube-infra"
-  zone = "ru-central1-a"
-
-  resources {
-    cores  = 2
-    memory = 2
-  }
-
-  boot_disk {
-    initialize_params {
-      image_id = "fd83n3uou8m03iq9gavu"
-    }
-  }
-
-  network_interface {
-    subnet_id = yandex_vpc_subnet.envoy-subnet-worker.id
-    nat       = true
-  }
-
-  metadata = {
-    ssh-keys = "ubuntu:${file("~/.ssh/id_rsa.pub")}"
-  }
-}
-
 resource "local_file" "ansible_inventory" {
   filename = "ya_cloud"
   content = templatefile("inventory.tpl", {
-    master = yandex_compute_instance.kube-master.network_interface[0].ip_address
-    nodes = [yandex_compute_instance.kube-node-1.network_interface[0].ip_address, yandex_compute_instance.kube-node-2.network_interface[0].ip_address]
+    master = {
+      ansible_host: yandex_compute_instance.kube-master.network_interface[0].ip_address,
+      hostname: yandex_compute_instance.kube-master.hostname,
+      public_ip: yandex_compute_instance.kube-master.network_interface[0].nat_ip_address
+    }
+    nodes = [{
+      ansible_host: yandex_compute_instance.kube-node-1.network_interface[0].ip_address,
+      hostname: yandex_compute_instance.kube-node-1.hostname,
+      public_ip: yandex_compute_instance.kube-node-1.network_interface[0].nat_ip_address
+    }, {
+        ansible_host: yandex_compute_instance.kube-node-2.network_interface[0].ip_address,
+        hostname: yandex_compute_instance.kube-node-2.hostname,
+        public_ip: yandex_compute_instance.kube-node-2.network_interface[0].nat_ip_address
+      }
+    ]
   })
 }

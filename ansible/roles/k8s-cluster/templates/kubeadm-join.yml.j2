@@ -10,13 +10,13 @@ discovery:
   timeout: 5m0s
 controlPlane:
   localAPIEndpoint:
-    advertiseAddress: {{ ansible_default_ipv4.address }}
+    advertiseAddress: {{ internal_ip }}
     bindPort: 6443
   certificateKey: {{ kubeadm_masters_init_certificates_key.stdout_lines | last | string }}
 caCertPath: /etc/kubernetes/pki/ca.crt
 nodeRegistration:
   criSocket: {{ kubeadm_cri_socket }}
-  name: {{ inventory_hostname }}
+  name: {{ node_name }}
   taints:
   - effect: NoSchedule
     key: node-role.kubernetes.io/master
